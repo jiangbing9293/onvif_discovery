@@ -1,50 +1,19 @@
 /******************************************************************************
-
 * Copyright 2010-2013 A
-
 * FileName:     deviceprobe.c
-
 * Desc:  监视网络摄像头设备发现文件
-
-*
-
-*
-
 * Author:          Tom-hongtao.gao
-
 * Date:    2013/05/30
-
 * Notes:  数据结构使用链表
-
 *
-
 * -----------------------------------------------------------------
-
 * Histroy: v1.0   2013/05/30, Tom-hongtao.gao create this file
-
 *
-
 ******************************************************************************/
-
 /*-------------------------------- Includes ----------------------------------*/
-//#include "stdsoap2.h"
-//#include "soapH.h"
-//#include "remotediscovery.h"
 #include <stdio.h> 
 #include "soapStub.h"
 #include "wsdd.nsmap"
-/*-------------------- Global Definitions and Declarations -------------------*/
-
-/*----------------------- Constant / Macro Definitions -----------------------*/
-
-/*------------------------ Type Declarations ---------------------------------*/
-
-/*------------------------ Variable Declarations -----------------------------*/
-
-/*------------------------ Function Prototype --------------------------------*/
-
-/*------------------------ Function Implement --------------------------------*/
-
 
 int main(int argc, char *argv[]) {
     /* 变量声明 */
@@ -85,9 +54,7 @@ int main(int argc, char *argv[]) {
     soap->header = &header; //设置soap头消息的ID
     printf("%s : %d   \n ",__FUNCTION__, __LINE__);
     /*设置所需寻找设备的类型和范围,二者至少设定一个,
-
       否则可能收到非ONVIF设备,出现异常*/
-
     //设置soap消息的请求服务属性
     soap_default_wsdd__ScopesType(soap, &sScope);
     sScope.__item = "";     
