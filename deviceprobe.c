@@ -8,7 +8,7 @@
 *
 * -----------------------------------------------------------------
 * Histroy: v1.0   2013/05/30, Tom-hongtao.gao create this file
-*
+*          v1.1   2015/11/25, FREELANCER update  
 ******************************************************************************/
 /*-------------------------------- Includes ----------------------------------*/
 #include <stdio.h> 
@@ -21,9 +21,11 @@
 /***
  *  device info struct 
  */
-typedef struct device_list {
+typedef struct device {
 	char  *dev_uuid;
 	char  *dev_server_address;
+	char  *username;
+	char  *password;
 } DeviceInfo;
 
 DeviceInfo g_device_list[MAX_DEVICE];
@@ -53,34 +55,26 @@ int main(int argc, char *argv[]) {
 	macaddr[4] = 0x5; 
 	macaddr[5] = 0x6;  
 	sprintf(_HwId,"urn:uuid:%ud68a-1dd2-11b2-a105-%02X%02X%02X%02X%02X%02X", Flagrand, macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
-    printf("%s : %d  000 : id:%s  \n ",__FUNCTION__, __LINE__, _HwId);
     /************初始化*************/
     soap = soap_new(); //为soap申请变量空间,并初始化
-    if(soap==NULL)
-        return -1;
+    if ( soap == NULL) {
+		return -1;
+	}
     soap_set_namespaces(soap, namespaces); //设置soap的namespaces
-    printf("%s : %d   \n ",__FUNCTION__, __LINE__);
     soap->recv_timeout = 5; //超过5秒钟没有数据就退出
     soap_default_SOAP_ENV__Header(soap, &header);//将header设置为soap消息    头属性
     header.wsa__MessageID = _HwId;
     header.wsa__To     = "urn:schemas-xmlsoap-org:ws:2005:04:discovery";
     header.wsa__Action = "http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe";
     soap->header = &header; //设置soap头消息的ID
-    printf("%s : %d   \n ",__FUNCTION__, __LINE__);
-    /*设置所需寻找设备的类型和范围,二者至少设定一个,
-      否则可能收到非ONVIF设备,出现异常*/
     //设置soap消息的请求服务属性
     soap_default_wsdd__ScopesType(soap, &sScope);
     sScope.__item = "";     
 	//sScope.__item = "onvif://www.onvif.org";
     soap_default_wsdd__ProbeType(soap, &req);
     req.Scopes = &sScope;
-    /*设置所需设备的类型,ns1为命名空间前缀,为wsdd.nsmap文件中
-    {"tdn","http://www.onvif.org/ver10/network/wsdl"}的tdn,如果不是tdn,而是其它,
-    例如ns1这里也要随之改为ns1                   */   
     //req.Types = "tdn:NetworkVideoTransmitter";
     req.Types = "tds:Device";
-    printf("%s : %d   \n ",__FUNCTION__, __LINE__);
     //调用gSoap接口
     //soap_wsdd_Probe
     result  = soap_send___wsdd__Probe(soap, "soap.udp://239.255.255.250:3702", NULL, &req);
@@ -131,9 +125,8 @@ int main(int argc, char *argv[]) {
 					}
 				}
             }
-        }while(1);
+        } while ( 1);
     }
-    printf("%s : %d   \n ",__FUNCTION__, __LINE__);
     //清除soap
     soap_end(soap); // clean up and remove deserialized data
     soap_free(soap);//detach and free runtime context
