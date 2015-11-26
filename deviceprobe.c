@@ -12,8 +12,21 @@
 ******************************************************************************/
 /*-------------------------------- Includes ----------------------------------*/
 #include <stdio.h> 
+#include <string.h>
 #include "soapStub.h"
 #include "wsdd.nsmap"
+
+#define MAX_DEVICE 20
+
+/***
+ *  device info struct 
+ */
+typedef struct device_list {
+	char  *dev_uuid;
+	char  *dev_server_address;
+} DeviceInfo;
+
+DeviceInfo g_device_list[MAX_DEVICE];
 
 int main(int argc, char *argv[]) {
     /* 变量声明 */
@@ -28,7 +41,8 @@ int main(int argc, char *argv[]) {
     int result = 0;    //返回值        
 	unsigned char macaddr[6];  
 	char _HwId[1024];  
-	unsigned int Flagrand;  
+	unsigned int Flagrand;
+
 	// Create SessionID randomly  
 	srand((int)time(0));  
 	Flagrand = rand()%9000 + 8888;   
@@ -71,11 +85,11 @@ int main(int argc, char *argv[]) {
     //soap_wsdd_Probe
     result  = soap_send___wsdd__Probe(soap, "soap.udp://239.255.255.250:3702", NULL, &req);
     printf("%s: %d, send probe request success!\n",__FUNCTION__, __LINE__);
-    if(result==-1){
-        printf("soap error: %d, %s, %s\n", soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
+    if ( result == -1 ) {
+        printf ( "soap error: %d, %s, %s\n", soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
         result = soap->error;
-    } else{
-        do{
+    } else {
+        do {
             printf("%s: %d, begin receive probematch... \n",__FUNCTION__, __LINE__);
             printf("count=%d \n",count);
             //接收ProbeMatches,成功返回0,否则-1
@@ -87,13 +101,34 @@ int main(int argc, char *argv[]) {
             } else {                     
                 //读取服务端回应的Probematch消息
 				if ( resp.wsdd__ProbeMatches){
+					/***
 					printf("soap_recv___wsdd__Probe:  __sizeProbeMatch=%d\r\n",resp.wsdd__ProbeMatches->__sizeProbeMatch);
 					printf("Target EP Address : %s\r\n",      resp.wsdd__ProbeMatches->ProbeMatch->wsa__EndpointReference.Address);
 					printf("Target Type : %s\r\n",            resp.wsdd__ProbeMatches->ProbeMatch->Types);
 					printf("Target Service Address : %s\r\n", resp.wsdd__ProbeMatches->ProbeMatch->XAddrs);
 					printf("Target Metadata Version : %d\r\n",resp.wsdd__ProbeMatches->ProbeMatch->MetadataVersion);
 					printf("Target Scopes Address : %s\r\n",  resp.wsdd__ProbeMatches->ProbeMatch->Scopes->__item);
-					count++;
+					**/
+					DeviceInfo device;
+					device.dev_uuid = resp.wsdd__ProbeMatches->ProbeMatch->wsa__EndpointReference.Address;
+					device.dev_server_address =  resp.wsdd__ProbeMatches->ProbeMatch->XAddrs;
+					char duplicate = 0;
+					int index = 0;
+					while ( index < MAX_DEVICE) {
+						char *uuid = g_device_list[ index].dev_uuid;
+						if ( uuid != NULL && strcmp( uuid, device.dev_uuid) == 0 ) {
+							duplicate = 1;
+							break;
+						}
+						++index;
+					}
+					if ( duplicate == 0) {
+						printf ( " find device no :%d  \n" , ( count +1));
+						printf ( " uuid : %s  \n" , device.dev_uuid);
+						printf ( " server address : %s  \n" , device.dev_server_address);
+						g_device_list[ count] = device;
+						count += 1;
+					}
 				}
             }
         }while(1);
